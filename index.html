@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mi Reproductor de Música</title>
+</head>
+<body>
+  <h1>🎵 Mi Música</h1>
+
+  <h2>🎧 Canciones locales</h2>
+  <ul id="song-list"></ul>
+  <audio id="player" controls></audio>
+
+  <hr>
+
+  <h2>🔍 Buscar en YouTube</h2>
+  <input type="text" id="yt-search" placeholder="Buscar canción en YouTube..." />
+  <ul id="yt-results"></ul>
+  <div id="yt-player"></div>
+
+  <script>
+    // Parte 1: reproductor local desde Flask
+    async function cargarCanciones() {
+      const res = await fetch('/songs');
+      const canciones = await res.json();
+      const lista = document.getElementById('song-list');
+      const reproductor = document.getElementById('player');
+
+      canciones.forEach(nombre => {
+        const item = document.createElement('li');
+        item.textContent = nombre;
+        item.style.cursor = 'pointer';
+        item.onclick = () => {
+          reproductor.src = `/songs/${nombre}`;
+          reproductor.play();
+        };
+        lista.appendChild(item);
+      });
+    }
+
+    cargarCanciones();
+
+    // Parte 2: búsqueda en YouTube
+    const API_KEY = 'AIzaSyDYjwY0ghG3W5NMA3DmvHQrsUMs_yUM6GI';  // 🔑 Reemplaza esto con tu propia API key
+    const input = document.getElementById('yt-search');
+    const ytResults = document.getElementById('yt-results');
+    const ytPlayer = document.getElementById('yt-player');
+
+    input.addEventListener('input', async () => {
+      const query = input.value.trim();
+      if (query.length < 3) return;
+
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=5`);
+      const data = await res.json();
+
+      ytResults.innerHTML = '';
+      data.items.forEach(video => {
+        const li = document.createElement('li');
+        li.textContent = video.snippet.title;
+        li.style.cursor = 'pointer';
+        li.onclick = () => {
+          ytPlayer.innerHTML = `<iframe width="560" height="315" src="https://www.youtube.com/embed/${video.id.videoId}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+        };
+        ytResults.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>
